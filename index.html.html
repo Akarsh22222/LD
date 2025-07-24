@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vitalyfe Leaderboard Generator</title>
+    <style>
+        :root {
+            --vitalyfe-orange: #ff5f03;
+            --vitalyfe-light: #fff4e6;
+            --vitalyfe-dark: #333;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .app-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: var(--vitalyfe-orange);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        button {
+            background-color: var(--vitalyfe-orange);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        button:hover {
+            background-color: #e05500;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        button.secondary {
+            background-color: #6c757d;
+        }
+        
+        button.secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        button.success {
+            background-color: #28a745;
+        }
+        
+        button.success:hover {
+            background-color: #218838;
+        }
+        
+        input, textarea, select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--vitalyfe-orange);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255,95,3,0.2);
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .leaderboard-container {
+            position: relative;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .leaderboard-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .leaderboard-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--vitalyfe-orange);
+            margin-bottom: 10px;
+        }
+        
+        .leaderboard-subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .leaderboard {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        
+        .leaderboard th {
+            background-color: var(--vitalyfe-orange);
+            color: white;
+            padding: 18px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .leaderboard th:first-child {
+            border-top-left-radius: 10px;
+        }
+        
+        .leaderboard th:last-child {
+            border-top-right-radius: 10px;
+        }
+        
+        .leaderboard td {
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            font-size: 15px;
+        }
+        
+        .leaderboard tr:not(:first-child):hover {
+            background-color: #f8f9fa;
+        }
+        
+        .leaderboard tr:first-child {
+            background-color: var(--vitalyfe-light);
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .leaderboard tr:first-child td:first-child::before {
+            content: "👑";
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .rank {
+            font-weight: bold;
+            color: var(--vitalyfe-orange);
+            font-size: 18px;
+        }
+        
+        .participant-actions {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none;
+            gap: 8px;
+        }
+        
+        .leaderboard tr:hover .participant-actions {
+            display: flex;
+        }
+        
+        .action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+        
+        .reward-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--vitalyfe-orange);
+        }
+        
+        .reward-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .reward-emoji {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .reward-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--vitalyfe-orange);
+        }
+        
+        .reward-edit {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+        
+        .close-modal:hover {
+            color: var(--vitalyfe-orange);
+            transform: rotate(90deg);
+        }
+        
+        .download-preview {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+        
+        .hidden-in-download {
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+        
+        .download-mode .hidden-in-download {
+            opacity: 0;
+            height: 0;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        .title-edit {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        
+        .title-edit input {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--vitalyfe-orange);
+            border: 2px dashed #ddd;
+            padding: 10px 15px;
+        }
+        
+        .title-edit button {
+            padding: 10px 15px;
+        }
+        
+        /* Special elements that only appear in download */
+        .download-only {
+            display: none;
+        }
+        
+        .download-mode .download-only {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .control-group {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .leaderboard-title {
+                font-size: 24px;
+            }
+            
+            .reward-edit {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>Vitalyfe Leaderboard Generator</h1>
+            <p>Create beautiful, shareable challenge leaderboards</p>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <button id="addParticipantBtn">
+                    <span>+</span> Add Participant
+                </button>
+                <button id="randomizeBtn" class="secondary">
+                    <span>🎲</span> Randomize
+                </button>
+                <button id="bulkEditBtn" class="secondary">
+                    <span>📝</span> Bulk Edit
+                </button>
+            </div>
+            
+            <div class="control-group">
+                <button id="previewBtn" class="secondary">
+                    <span>👁️</span> Preview
+                </button>
+                <button id="downloadBtn" class="success">
+                    <span>📷</span> Download Image
+                </button>
+            </div>
+        </div>
+        
+        <div class="leaderboard-container">
+            <!-- This header will be visible in the downloaded image -->
+            <div class="leaderboard-header download-only">
+                <h2 class="leaderboard-title" id="downloadTitle">21 Days Leaderboard</h2>
+                <div class="leaderboard-subtitle">Current standings for the challenge</div>
+            </div>
+            
+            <!-- Editable header (only visible in editor) -->
+            <div class="leaderboard-header hidden-in-download">
+                <div class="title-edit">
+                    <input type="text" id="leaderboardTitleInput" value="21 Days Leaderboard">
+                    <button id="updateTitleBtn" class="secondary">Update</button>
+                </div>
+                <div class="leaderboard-subtitle">Current standings for the challenge</div>
+            </div>
+            
+            <table class="leaderboard" id="leaderboard">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Participant</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <!-- Participants will be added here -->
+                </tbody>
+            </table>
+            
+            <!-- Reward display for downloaded image -->
+            <div class="reward-container download-only">
+                <h3>Challenge Prize</h3>
+                <div class="reward-display">
+                    <div class="reward-emoji" id="downloadRewardEmoji">🏆</div>
+                    <div class="reward-name" id="downloadRewardName">Wireless Earbuds</div>
+                </div>
+            </div>
+            
+            <!-- Editable reward section (only visible in editor) -->
+            <div class="reward-container hidden-in-download">
+                <h3>Challenge Prize</h3>
+                <div class="reward-display">
+                    <div class="reward-emoji" id="rewardEmoji">🏆</div>
+                    <div class="reward-name" id="rewardName">Wireless Earbuds</div>
+                </div>
+                <div class="reward-edit">
+                    <input type="text" id="prizeEmojiInput" placeholder="Prize emoji" value="🏆" style="width: 80px;">
+                    <input type="text" id="prizeNameInput" placeholder="Prize name" value="Wireless Earbuds" style="flex: 1;">
+                    <button id="updatePrizeBtn">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bulk Edit Modal -->
+    <div class="modal" id="bulkEditModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Bulk Edit Participants</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <p>Enter one participant per line in format: <code>Name, Points</code></p>
+            <textarea id="bulkEditTextarea" placeholder="John Doe, 850&#10;Jane Smith, 720&#10;Mike Johnson, 650"></textarea>
+            <button id="applyBulkEdit" class="success" style="margin-top: 15px;">Apply Changes</button>
+        </div>
+    </div>
+    
+    <!-- Preview Modal -->
+    <div class="modal" id="previewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Download Preview</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div id="previewContent" class="download-preview"></div>
+            <button id="downloadFromPreview" class="success" style="margin-top: 15px; width: 100%;">
+                <span>📷</span> Download This Image
+            </button>
+        </div>
+    </div>
+    
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            const addParticipantBtn = document.getElementById('addParticipantBtn');
+            const randomizeBtn = document.getElementById('randomizeBtn');
+            const bulkEditBtn = document.getElementById('bulkEditBtn');
+            const previewBtn = document.getElementById('previewBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const bulkEditModal = document.getElementById('bulkEditModal');
+            const previewModal = document.getElementById('previewModal');
+            const bulkEditTextarea = document.getElementById('bulkEditTextarea');
+            const applyBulkEdit = document.getElementById('applyBulkEdit');
+            const previewContent = document.getElementById('previewContent');
+            const downloadFromPreview = document.getElementById('downloadFromPreview');
+            const closeModals = document.querySelectorAll('.close-modal');
+            const rewardEmoji = document.getElementById('rewardEmoji');
+            const rewardName = document.getElementById('rewardName');
+            const prizeEmojiInput = document.getElementById('prizeEmojiInput');
+            const prizeNameInput = document.getElementById('prizeNameInput');
+            const updatePrizeBtn = document.getElementById('updatePrizeBtn');
+            const leaderboardTitleInput = document.getElementById('leaderboardTitleInput');
+            const updateTitleBtn = document.getElementById('updateTitleBtn');
+            const downloadTitle = document.getElementById('downloadTitle');
+            const downloadRewardEmoji = document.getElementById('downloadRewardEmoji');
+            const downloadRewardName = document.getElementById('downloadRewardName');
+            
+            // Sample data
+            let participants = [
+                { name: "Alex Johnson", points: 950 },
+                { name: "Sam Wilson", points: 875 },
+                { name: "Taylor Smith", points: 820 },
+                { name: "Jordan Lee", points: 790 },
+                { name: "Casey Kim", points: 755 }
+            ];
+            
+            let prize = {
+                emoji: "🏆",
+                name: "Wireless Earbuds"
+            };
+            
+            let leaderboardTitle = "21 Days Leaderboard";
+            
+            // Initialize the leaderboard
+            function initLeaderboard() {
+                updateLeaderboard();
+                updateBulkTextarea();
+                updatePrizeDisplay();
+                updateTitleDisplay();
+            }
+            
+            // Update the leaderboard display
+            function updateLeaderboard() {
+                // Sort by points (descending)
+                const sorted = [...participants].sort((a, b) => b.points - a.points);
+                
+                leaderboardBody.innerHTML = '';
+                
+                sorted.forEach((participant, index) => {
+                    const row = document.createElement('tr');
+                    row.dataset.index = participants.findIndex(p => p.name === participant.name);
+                    
+                    // Rank cell
+                    const rankCell = document.createElement('td');
+                    rankCell.className = 'rank';
+                    rankCell.textContent = index + 1;
+                    
+                    // Name cell
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = participant.name;
+                    
+                    // Points cell
+                    const pointsCell = document.createElement('td');
+                    pointsCell.textContent = participant.points;
+                    
+                    // Actions
+                    const actionsCell = document.createElement('div');
+                    actionsCell.className = 'participant-actions';
+                    
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'action-btn secondary';
+                    editBtn.innerHTML = '✏️';
+                    editBtn.title = 'Edit';
+                    editBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        editParticipant(row.dataset.index);
+                    };
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'action-btn';
+                    removeBtn.innerHTML = '🗑️';
+                    removeBtn.title = 'Remove';
+                    removeBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        removeParticipant(row.dataset.index);
+                    };
+                    
+                    actionsCell.appendChild(editBtn);
+                    actionsCell.appendChild(removeBtn);
+                    
+                    pointsCell.appendChild(actionsCell);
+                    
+                    row.appendChild(rankCell);
+                    row.appendChild(nameCell);
+                    row.appendChild(pointsCell);
+                    
+                    leaderboardBody.appendChild(row);
+                });
+            }
+            
+            // Update prize display
+            function updatePrizeDisplay() {
+                rewardEmoji.textContent = prize.emoji;
+                rewardName.textContent = prize.name;
+                downloadRewardEmoji.textContent = prize.emoji;
+                downloadRewardName.textContent = prize.name;
+                prizeEmojiInput.value = prize.emoji;
+                prizeNameInput.value = prize.name;
+            }
+            
+            // Update title display
+            function updateTitleDisplay() {
+                leaderboardTitleInput.value = leaderboardTitle;
+                downloadTitle.textContent = leaderboardTitle;
+            }
+            
+            // Add a new participant
+            function addParticipant(name = '', points = 0) {
+                if (!name) name = `Participant ${participants.length + 1}`;
+                participants.push({ name, points });
+                updateLeaderboard();
+                updateBulkTextarea();
+            }
+            
+            // Remove a participant
+            function removeParticipant(index) {
+                if (participants.length <= 3) {
+                    alert('You need at least 3 participants');
+                    return;
+                }
+                
+                participants.splice(index, 1);
+                updateLeaderboard();
+                updateBulkTextarea();
+            }
+            
+            // Edit a participant
+            function editParticipant(index) {
+                const participant = participants[index];
+                const newName = prompt('Edit name:', participant.name);
+                if (newName === null) return;
+                
+                const newPoints = prompt('Edit points:', participant.points);
+                if (newPoints === null) return;
+                
+                participant.name = newName;
+                participant.points = parseInt(newPoints) || 0;
+                updateLeaderboard();
+                updateBulkTextarea();
+            }
+            
+            // Randomize points
+            function randomizePoints() {
+                participants.forEach(p => {
+                    p.points = Math.floor(Math.random() * 1000);
+                });
+                updateLeaderboard();
+                updateBulkTextarea();
+            }
+            
+            // Update bulk textarea with current data
+            function updateBulkTextarea() {
+                bulkEditTextarea.value = participants.map(p => `${p.name}, ${p.points}`).join('\n');
+            }
+            
+            // Apply bulk edits
+            function applyBulkChanges() {
+                const lines = bulkEditTextarea.value.split('\n').filter(line => line.trim());
+                const newParticipants = [];
+                
+                for (const line of lines) {
+                    const parts = line.split(',').map(part => part.trim());
+                    if (parts.length >= 2) {
+                        const name = parts.slice(0, -1).join(', '); // Handle names with commas
+                        const points = parseInt(parts[parts.length - 1]) || 0;
+                        newParticipants.push({ name, points });
+                    } else if (parts.length === 1) {
+                        newParticipants.push({ name: parts[0], points: 0 });
+                    }
+                }
+                
+                if (newParticipants.length >= 3) {
+                    participants = newParticipants;
+                    updateLeaderboard();
+                    bulkEditModal.style.display = 'none';
+                } else {
+                    alert('You need at least 3 participants');
+                }
+            }
+            
+            // Update prize information
+            function updatePrize() {
+                prize.emoji = prizeEmojiInput.value.trim() || "🏆";
+                prize.name = prizeNameInput.value.trim() || "[Prize Name]";
+                updatePrizeDisplay();
+            }
+            
+            // Update leaderboard title
+            function updateTitle() {
+                leaderboardTitle = leaderboardTitleInput.value.trim() || "21 Days Leaderboard";
+                updateTitleDisplay();
+            }
+            
+            // Generate download image
+            async function generateDownloadImage() {
+                const container = document.querySelector('.leaderboard-container');
+                
+                // Clone the container to avoid affecting the live version
+                const clone = container.cloneNode(true);
+                clone.classList.add('download-mode');
+                
+                // Add to preview
+                previewContent.innerHTML = '';
+                previewContent.appendChild(clone);
+                
+                // Show preview modal
+                previewModal.style.display = 'flex';
+                
+                // Return the clone for actual download if needed
+                return clone;
+            }
+            
+            // Download the image
+            async function downloadImage() {
+                const container = document.querySelector('.leaderboard-container');
+                
+                // Create a temporary container for download
+                const tempContainer = document.createElement('div');
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.width = '800px';
+                tempContainer.style.padding = '30px';
+                tempContainer.style.background = 'white';
+                tempContainer.style.borderRadius = '15px';
+                document.body.appendChild(tempContainer);
+                
+                // Add title
+                const titleElement = document.createElement('h2');
+                titleElement.className = 'leaderboard-title';
+                titleElement.textContent = leaderboardTitle;
+                titleElement.style.textAlign = 'center';
+                titleElement.style.color = 'var(--vitalyfe-orange)';
+                titleElement.style.fontSize = '28px';
+                titleElement.style.marginBottom = '20px';
+                tempContainer.appendChild(titleElement);
+                
+                // Add subtitle
+                const subtitleElement = document.createElement('div');
+                subtitleElement.className = 'leaderboard-subtitle';
+                subtitleElement.textContent = 'Current standings for the challenge';
+                subtitleElement.style.textAlign = 'center';
+                subtitleElement.style.marginBottom = '20px';
+                subtitleElement.style.color = '#666';
+                tempContainer.appendChild(subtitleElement);
+                
+                // Add leaderboard table
+                const tableClone = document.getElementById('leaderboard').cloneNode(true);
+                tempContainer.appendChild(tableClone);
+                
+                // Add prize section
+                const prizeContainer = document.createElement('div');
+                prizeContainer.style.background = 'white';
+                prizeContainer.style.borderRadius = '15px';
+                prizeContainer.style.padding = '25px';
+                prizeContainer.style.marginTop = '30px';
+                prizeContainer.style.textAlign = 'center';
+                prizeContainer.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+                prizeContainer.style.borderTop = '5px solid var(--vitalyfe-orange)';
+                
+                const prizeTitle = document.createElement('h3');
+                prizeTitle.textContent = 'Challenge Prize';
+                prizeTitle.style.marginBottom = '15px';
+                prizeContainer.appendChild(prizeTitle);
+                
+                const prizeDisplay = document.createElement('div');
+                prizeDisplay.style.display = 'flex';
+                prizeDisplay.style.flexDirection = 'column';
+                prizeDisplay.style.alignItems = 'center';
+                prizeDisplay.style.gap = '10px';
+                
+                const prizeEmoji = document.createElement('div');
+                prizeEmoji.className = 'reward-emoji';
+                prizeEmoji.textContent = prize.emoji;
+                prizeEmoji.style.fontSize = '48px';
+                prizeDisplay.appendChild(prizeEmoji);
+                
+                const prizeName = document.createElement('div');
+                prizeName.className = 'reward-name';
+                prizeName.textContent = prize.name;
+                prizeName.style.fontSize = '22px';
+                prizeName.style.fontWeight = 'bold';
+                prizeName.style.color = 'var(--vitalyfe-orange)';
+                prizeDisplay.appendChild(prizeName);
+                
+                prizeContainer.appendChild(prizeDisplay);
+                tempContainer.appendChild(prizeContainer);
+                
+                try {
+                    const canvas = await html2canvas(tempContainer, {
+                        backgroundColor: '#ffffff',
+                        scale: 2,
+                        logging: false,
+                        useCORS: true,
+                        width: tempContainer.offsetWidth,
+                        height: tempContainer.offsetHeight,
+                        windowWidth: tempContainer.scrollWidth,
+                        windowHeight: tempContainer.scrollHeight
+                    });
+                    
+                    const link = document.createElement('a');
+                    link.download = 'vitalyfe-leaderboard.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                } catch (error) {
+                    console.error('Error generating image:', error);
+                    alert('Error generating image. Please try again.');
+                } finally {
+                    // Clean up
+                    document.body.removeChild(tempContainer);
+                }
+            }
+            
+            // Event listeners
+            addParticipantBtn.addEventListener('click', () => addParticipant());
+            randomizeBtn.addEventListener('click', randomizePoints);
+            bulkEditBtn.addEventListener('click', () => {
+                bulkEditModal.style.display = 'flex';
+            });
+            previewBtn.addEventListener('click', generateDownloadImage);
+            downloadBtn.addEventListener('click', downloadImage);
+            applyBulkEdit.addEventListener('click', applyBulkChanges);
+            downloadFromPreview.addEventListener('click', downloadImage);
+            updatePrizeBtn.addEventListener('click', updatePrize);
+            updateTitleBtn.addEventListener('click', updateTitle);
+            
+            closeModals.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    bulkEditModal.style.display = 'none';
+                    previewModal.style.display = 'none';
+                });
+            });
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === bulkEditModal) bulkEditModal.style.display = 'none';
+                if (e.target === previewModal) previewModal.style.display = 'none';
+            });
+            
+            // Initialize
+            initLeaderboard();
+        });
+    </script>
+</body>
+</html>
